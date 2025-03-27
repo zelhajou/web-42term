@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import axios from 'axios';
-import WidgetDisplay from '@/components/WidgetDisplay';
+import WidgetDisplay from '@/components/student/WidgetDisplay';
 import { generateSkillsBars, generateErrorSVG } from '@/lib/generators/skillsGenerator';
+// Remove the import for DemoModeNotice
 
 export default function HomePage() {
   const [username, setUsername] = useState('');
@@ -83,7 +84,7 @@ export default function HomePage() {
         </div>
 
         {/* Form */}
-                  <div className="mb-8">
+        <div className="mb-8">
           <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg shadow-md p-6 max-w-md mx-auto">
             <div className="mb-4">
               <label htmlFor="username" className="block text-gray-300 mb-2 font-medium">
@@ -119,11 +120,7 @@ export default function HomePage() {
               </div>
             )}
             
-            {!process.env.FT_CLIENT_ID && (
-              <div className="mt-4 p-3 bg-yellow-900/30 border border-yellow-700/50 rounded-md text-yellow-200 text-sm">
-                <p><strong>Demo Mode:</strong> Running without 42 API credentials. Using mock data instead.</p>
-              </div>
-            )}
+            {/* Remove the DemoModeNotice component */}
           </form>
         </div>
 

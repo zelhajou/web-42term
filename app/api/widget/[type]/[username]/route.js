@@ -4,8 +4,8 @@ import { generateSkillsBars, generateErrorSVG } from '@/lib/generators/skillsGen
 import { generateGithubCompatibleSvg } from '@/lib/generators/githubSvgGenerator';
 import { mockStudentData } from '@/lib/mock-data';
 
-// Check if we're in demo mode (no API credentials available)
-const isDemoMode = !process.env.FT_CLIENT_ID || !process.env.FT_CLIENT_SECRET;
+// Remove demo mode check since you have credentials
+// const isDemoMode = !process.env.FT_CLIENT_ID || !process.env.FT_CLIENT_SECRET;
 
 /**
  * Cache control constants
@@ -35,19 +35,10 @@ export async function GET(request, { params }) {
       'Content-Security-Policy': "default-src 'self'; style-src 'unsafe-inline'",
     };
     
-    let studentData;
-    
-    // If in demo mode, use mock data instead of calling the API
-    if (isDemoMode) {
-      console.log('Using mock data for widget generation:', username);
-      studentData = JSON.parse(JSON.stringify(mockStudentData)); // Deep clone
-      studentData.login = username;
-      studentData.displayName = username.charAt(0).toUpperCase() + username.slice(1);
-    } else {
-      // Fetch student data (ensure username is properly decoded)
-      const decodedUsername = decodeURIComponent(username);
-      studentData = await fetchStudentData(decodedUsername);
-    }
+    // Remove demo mode check and always fetch from API
+    // Fetch student data (ensure username is properly decoded)
+    const decodedUsername = decodeURIComponent(username);
+    const studentData = await fetchStudentData(decodedUsername);
     
     // Generate the appropriate widget based on type
     let svgContent;
