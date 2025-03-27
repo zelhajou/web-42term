@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { fetchStudentData } from '@/lib/api';
 import { generateSkillsBars, generateErrorSVG } from '@/lib/generators/skillsGenerator';
+import { mockStudentData } from '@/lib/mock-data';
+
+// Check if we're in demo mode (no API credentials available)
+const isDemoMode = !process.env.FT_CLIENT_ID || !process.env.FT_CLIENT_SECRET;
 
 /**
  * Cache control constants
@@ -27,9 +31,19 @@ export async function GET(request, { params }) {
       'Access-Control-Allow-Origin': '*',
     };
     
-    // Fetch student data (ensure username is properly decoded)
-    const decodedUsername = decodeURIComponent(username);
-    const studentData = await fetchStudentData(decodedUsername);
+    let studentData;
+    
+    // If in demo mode, use mock data instead of calling the API
+    if (isDemoMode) {
+      console.log('Using mock data for widget generation:', username);
+      studentData = JSON.parse(JSON.stringify(mockStudentData)); // Deep clone
+      studentData.login = username;
+      studentData.displayName = username.charAt(0).toUpperCase() + username.slice(1);
+    } else {
+      // Fetch student data (ensure username is properly decoded)
+      const decodedUsername = decodeURIComponent(username);
+      studentData = await fetchStudentData(decodedUsername);
+    }
     
     // Generate the appropriate widget based on type
     let svgContent;
@@ -54,7 +68,7 @@ export async function GET(request, { params }) {
     const errorSvg = generateErrorSVG(error.message || 'Failed to generate widget');
     
     return new NextResponse(errorSvg, {
-      headers: { 'Content-Type': 'image/svg+xml' },
+      headers: { 'Content-Type': 'image/svg+xml; charset=utf-8' },
       status: 500
     });
   }
