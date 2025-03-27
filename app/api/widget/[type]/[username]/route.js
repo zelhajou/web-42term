@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchStudentData } from '@/lib/api';
 import { generateSkillsBars, generateErrorSVG } from '@/lib/generators/skillsGenerator';
+import { generateGithubCompatibleSvg } from '@/lib/generators/githubSvgGenerator';
 import { mockStudentData } from '@/lib/mock-data';
 
 // Check if we're in demo mode (no API credentials available)
@@ -29,6 +30,9 @@ export async function GET(request, { params }) {
       'Cache-Control': `public, max-age=${CACHE_MAX_AGE}, stale-while-revalidate=${STALE_WHILE_REVALIDATE}`,
       // Allow cross-origin embedding (important for GitHub and other sites)
       'Access-Control-Allow-Origin': '*',
+      // Additional headers to help with GitHub's Camo proxy
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'self'; style-src 'unsafe-inline'",
     };
     
     let studentData;
@@ -50,7 +54,8 @@ export async function GET(request, { params }) {
     
     switch (type) {
       case 'skills-bars':
-        svgContent = generateSkillsBars(studentData, theme);
+        // Use GitHub-compatible SVG generator instead of the regular one
+        svgContent = generateGithubCompatibleSvg(studentData, theme);
         break;
       
       default:
