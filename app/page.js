@@ -1,102 +1,148 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState } from 'react';
+import axios from 'axios';
+import WidgetDisplay from '@/components/WidgetDisplay';
+import { generateSkillsBars, generateErrorSVG } from '@/lib/generators/skillsGenerator';
+
+export default function HomePage() {
+  const [username, setUsername] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [svgWidget, setSvgWidget] = useState('');
+  const [currentUsername, setCurrentUsername] = useState('');
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!username.trim()) {
+      setError('Please enter a valid username');
+      return;
+    }
+    
+    // Validate username format
+    if (!/^[a-z0-9-]+$/i.test(username)) {
+      setError('Please enter a valid 42 intra username (letters, numbers, and hyphens only)');
+      return;
+    }
+    
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      // Fetch student data from our API with properly encoded username
+      const encodedUsername = encodeURIComponent(username.trim());
+      const response = await axios.get(`/api/student/${encodedUsername}?dataType=skills`);
+      const data = response.data;
+      
+      // Generate the SVG widget
+      const svg = generateSkillsBars(data);
+      setSvgWidget(svg);
+      setCurrentUsername(username);
+      
+    } catch (err) {
+      console.error('Error:', err);
+      
+      // Handle specific error types
+      let errorMessage = 'Error generating widget';
+      
+      if (err.response) {
+        if (err.response.status === 429) {
+          errorMessage = 'Rate limit exceeded. Please try again in a minute.';
+        } else if (err.response.status === 404) {
+          errorMessage = `Username '${username}' not found. Please check the spelling.`;
+        } else if (err.response.data?.error) {
+          errorMessage = err.response.data.error;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      setSvgWidget(generateErrorSVG(errorMessage));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <header className="bg-gray-800 shadow-md">
+        <div className="max-w-5xl mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-blue-400">42 Widgets</h1>
+        </div>
+      </header>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <main className="max-w-5xl mx-auto p-4 py-8">
+        <div className="mb-8 text-center">
+          <h2 className="text-3xl font-bold mb-2">Generate Your 42 Widget</h2>
+          <p className="text-gray-300">
+            Create beautiful widgets to showcase your 42 school skills on GitHub and other platforms.
+          </p>
+        </div>
+
+        {/* Form */}
+        <div className="mb-8">
+          <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg shadow-md p-6 max-w-md mx-auto">
+            <div className="mb-4">
+              <label htmlFor="username" className="block text-gray-300 mb-2 font-medium">
+                42 Intra Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                className="w-full px-4 py-2 border rounded-md bg-gray-700 text-white border-gray-600"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="e.g. zelhajou"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className={`
+                w-full py-2 px-4 rounded-md text-white font-medium
+                ${isLoading
+                  ? 'bg-gray-500 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'}`
+              }
+              disabled={isLoading}
+            >
+              {isLoading ? 'Generating...' : 'Generate Widget'}
+            </button>
+            
+            {error && (
+              <div className="mt-4 text-red-400">
+                {error}
+              </div>
+            )}
+          </form>
+        </div>
+
+        {/* Widget Display */}
+        {svgWidget && (
+          <WidgetDisplay svgWidget={svgWidget} username={currentUsername} />
+        )}
+
+        {/* How to use */}
+        <div className="mt-12 bg-gray-800 rounded-lg shadow-md p-6">
+          <h3 className="text-xl font-bold mb-4">How to Use</h3>
+          <ol className="list-decimal pl-5 space-y-2 text-gray-300">
+            <li>Enter your 42 intra username</li>
+            <li>Generate the widget</li>
+            <li>Copy the markdown code and paste it into your GitHub README.md</li>
+          </ol>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      <footer className="bg-gray-800 shadow-inner mt-12 py-6">
+        <div className="max-w-5xl mx-auto px-4 text-center">
+          <p className="text-gray-400 text-sm">
+            Created with ❤️ • Not affiliated with 42 School
+          </p>
+        </div>
       </footer>
     </div>
   );
