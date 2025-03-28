@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import TerminalSkillsDisplay from '@/components/student/TerminalSkillsDisplay';
+import ShareLinks from '@/components/student/ShareLinks';
 import { generateTerminalSkills, generateErrorSVG } from '@/lib/generators/terminalSkillsGenerator';
 
 export default function HomePage() {
@@ -12,6 +13,8 @@ export default function HomePage() {
   const [svgWidget, setSvgWidget] = useState('');
   const [currentUsername, setCurrentUsername] = useState('');
   const [widgetType, setWidgetType] = useState('skills'); // 'skills' or 'projects'
+  const [selectedTheme, setSelectedTheme] = useState('dark');
+  const [showShareOptions, setShowShareOptions] = useState(false);
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -40,14 +43,16 @@ export default function HomePage() {
       // Generate the SVG widget based on selected type
       let svg;
       if (widgetType === 'skills') {
-        svg = generateTerminalSkills(data);
+        svg = generateTerminalSkills(data, selectedTheme);
       } else {
         // For future project visualization
-        svg = generateTerminalSkills(data); // Placeholder until project viz is implemented
+        svg = generateTerminalSkills(data, selectedTheme); // Placeholder until project viz is implemented
       }
       
       setSvgWidget(svg);
       setCurrentUsername(username);
+      // Reset share options panel when generating new widget
+      setShowShareOptions(false);
       
     } catch (err) {
       console.error('Error:', err);
@@ -68,9 +73,26 @@ export default function HomePage() {
       }
       
       setError(errorMessage);
-      setSvgWidget(generateErrorSVG(errorMessage));
+      setSvgWidget(generateErrorSVG(errorMessage, selectedTheme));
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  // Handle theme change
+  const handleThemeChange = (theme) => {
+    setSelectedTheme(theme);
+    if (currentUsername) {
+      try {
+        // Re-generate the widget with the new theme
+        const encodedUsername = encodeURIComponent(currentUsername.trim());
+        axios.get(`/api/student/${encodedUsername}`).then(response => {
+          const data = response.data;
+          setSvgWidget(generateTerminalSkills(data, theme));
+        });
+      } catch (err) {
+        console.error('Error updating theme:', err);
+      }
     }
   };
 
@@ -224,32 +246,55 @@ export default function HomePage() {
                   <div className="text-xs text-gray-500">THEME:</div>
                   <div className="flex gap-1">
                     <button 
-                      className="px-3 py-1 text-xs rounded bg-[#242424] text-gray-300 hover:bg-[#303030]"
-                      onClick={() => window.dispatchEvent(new CustomEvent('set-theme', { detail: 'dark' }))}
+                      className={`px-3 py-1 text-xs rounded ${selectedTheme === 'dark' ? 'bg-blue-600 text-white' : 'bg-[#242424] text-gray-300 hover:bg-[#303030]'}`}
+                      onClick={() => handleThemeChange('dark')}
                     >
                       Dark
                     </button>
                     <button 
-                      className="px-3 py-1 text-xs rounded bg-[#242424] text-gray-300 hover:bg-[#303030]"
-                      onClick={() => window.dispatchEvent(new CustomEvent('set-theme', { detail: 'light' }))}
+                      className={`px-3 py-1 text-xs rounded ${selectedTheme === 'light' ? 'bg-blue-600 text-white' : 'bg-[#242424] text-gray-300 hover:bg-[#303030]'}`}
+                      onClick={() => handleThemeChange('light')}
                     >
                       Light
                     </button>
                   </div>
                 </div>
                 
-                <button 
-                  className="px-4 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
-                  onClick={() => {
-                    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-                    const widgetUrl = `${baseUrl}/api/widget/${widgetType}/${encodeURIComponent(currentUsername)}?theme=dark`;
-                    const markdown = `![${currentUsername}'s 42 ${widgetType}](${widgetUrl})`;
-                    navigator.clipboard.writeText(markdown);
-                  }}
-                >
-                  Copy Markdown
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    className="px-3 py-1 text-xs rounded bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-1"
+                    onClick={() => setShowShareOptions(!showShareOptions)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                    </svg>
+                    {showShareOptions ? 'Hide Options' : 'Share Options'}
+                  </button>
+                  
+                  <button 
+                    className="px-3 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={() => {
+                      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+                      const widgetUrl = `${baseUrl}/api/widget/${widgetType}/${encodeURIComponent(currentUsername)}?theme=${selectedTheme}`;
+                      const markdown = `![${currentUsername}'s 42 ${widgetType}](${widgetUrl})`;
+                      navigator.clipboard.writeText(markdown);
+                    }}
+                  >
+                    Copy Markdown
+                  </button>
+                </div>
               </div>
+              
+              {/* Share Options Panel */}
+              {showShareOptions && (
+                <div className="mt-4">
+                  <ShareLinks 
+                    username={currentUsername} 
+                    widgetType={widgetType} 
+                    theme={selectedTheme} 
+                  />
+                </div>
+              )}
               
               <div className="text-xs text-gray-500 mt-2 text-center">
                 Tip: After adding to GitHub README, you may need to refresh your profile page to see changes.
