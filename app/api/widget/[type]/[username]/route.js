@@ -1,11 +1,8 @@
+// app/api/widget/skills/[username]/route.js
+
 import { NextResponse } from 'next/server';
 import { fetchStudentData } from '@/lib/api';
-import { generateSkillsBars, generateErrorSVG } from '@/lib/generators/skillsGenerator';
-import { generateGithubCompatibleSvg } from '@/lib/generators/githubSvgGenerator';
-import { mockStudentData } from '@/lib/mock-data';
-
-// Remove demo mode check since you have credentials
-// const isDemoMode = !process.env.FT_CLIENT_ID || !process.env.FT_CLIENT_SECRET;
+import { generateTerminalSkills, generateErrorSVG } from '@/lib/generators/terminalSkillsGenerator';
 
 /**
  * Cache control constants
@@ -14,47 +11,36 @@ const CACHE_MAX_AGE = 60 * 60; // 1 hour
 const STALE_WHILE_REVALIDATE = 60 * 60 * 24; // 1 day
 
 /**
- * API handler for widget generation
+ * API handler for the terminal-style skills widget
  */
 export async function GET(request, { params }) {
   try {
-    // Await params before destructuring (Next.js requirement)
     const resolvedParams = await Promise.resolve(params);
-    const { type, username } = resolvedParams;
+    const { username } = resolvedParams;
     const searchParams = request.nextUrl.searchParams;
-    const theme = searchParams.get('theme') || 'dark';
     
-    // Common headers
+    // Extract customization options
+    const theme = searchParams.get('theme') || 'dark';
+    const width = parseInt(searchParams.get('width'), 10) || 600;
+    const maxSkills = parseInt(searchParams.get('maxSkills'), 10) || 8;
+    
+    // Common headers for SVG response
     const headers = {
       'Content-Type': 'image/svg+xml; charset=utf-8',
       'Cache-Control': `public, max-age=${CACHE_MAX_AGE}, stale-while-revalidate=${STALE_WHILE_REVALIDATE}`,
-      // Allow cross-origin embedding (important for GitHub and other sites)
       'Access-Control-Allow-Origin': '*',
-      // Additional headers to help with GitHub's Camo proxy
       'X-Content-Type-Options': 'nosniff',
-      'Content-Security-Policy': "default-src 'self'; style-src 'unsafe-inline'",
     };
     
-    // Remove demo mode check and always fetch from API
-    // Fetch student data (ensure username is properly decoded)
+    // Fetch student data
     const decodedUsername = decodeURIComponent(username);
     const studentData = await fetchStudentData(decodedUsername);
     
-    // Generate the appropriate widget based on type
-    let svgContent;
-    
-    switch (type) {
-      case 'skills-bars':
-        // Use GitHub-compatible SVG generator instead of the regular one
-        svgContent = generateGithubCompatibleSvg(studentData, theme);
-        break;
-      
-      default:
-        return NextResponse.json(
-          { error: 'Invalid widget type' },
-          { status: 400 }
-        );
-    }
+    // Generate SVG chart
+    const svgContent = generateTerminalSkills(studentData, theme, {
+      width,
+      maxSkills
+    });
     
     return new NextResponse(svgContent, { headers });
   } catch (error) {
