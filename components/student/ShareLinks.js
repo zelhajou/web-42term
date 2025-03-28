@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 
 /**
- * Component to generate different sharing formats for the terminal widget
+ * Simple share links component that always shows all skills
  */
 const ShareLinks = ({ username, widgetType = 'skills', theme = 'dark' }) => {
   const [copiedFormat, setCopiedFormat] = useState(null);
   
-  // Base URL for the widget
+  // Get base URL
   const getBaseUrl = () => {
     return typeof window !== 'undefined' 
       ? window.location.origin 
       : 'https://42widgets.vercel.app';
   };
   
-  // Generate the widget URL
+  // Generate widget URL - always showing all skills
   const getWidgetUrl = () => {
     const baseUrl = getBaseUrl();
     return `${baseUrl}/api/widget/${widgetType}/${encodeURIComponent(username)}?theme=${theme}`;
@@ -38,6 +38,15 @@ const ShareLinks = ({ username, widgetType = 'skills', theme = 'dark' }) => {
         </svg>
       ),
       format: `<img src="${getWidgetUrl()}" alt="${username}'s 42 ${widgetType}" />`
+    },
+    markdown_linked: {
+      label: 'Markdown (With Profile Link)',
+      icon: (
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" />
+        </svg>
+      ),
+      format: `[![${username}'s 42 ${widgetType}](${getWidgetUrl()})](https://profile.intra.42.fr/users/${username})`
     },
     url: {
       label: 'Direct URL',
@@ -119,35 +128,6 @@ const ShareLinks = ({ username, widgetType = 'skills', theme = 'dark' }) => {
               style={{ maxHeight: '180px' }}
             />
           </div>
-        </div>
-      </div>
-      
-      {/* Custom settings */}
-      <div className="mt-4 pt-4 border-t border-[#333]">
-        <h4 className="text-xs text-gray-500 uppercase mb-2">Options</h4>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <a
-              href={`${getWidgetUrl()}&width=600`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-blue-400 hover:underline"
-            >
-              Custom width
-            </a>
-            <span className="text-gray-500 text-xs">|</span>
-            <a
-              href={`${getWidgetUrl()}&maxSkills=5`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-blue-400 hover:underline"
-            >
-              Limit skills
-            </a>
-          </div>
-          <p className="text-xs text-gray-500">
-            Tip: Add <code className="bg-[#242424] px-1 rounded">&width=600</code> or <code className="bg-[#242424] px-1 rounded">&maxSkills=5</code> to customize your widget.
-          </p>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-// app/api/widget/skills/[username]/route.js
+// app/api/widget/[type]/[username]/route.js
 
 import { NextResponse } from 'next/server';
 import { fetchStudentData } from '@/lib/api';
@@ -16,13 +16,16 @@ const STALE_WHILE_REVALIDATE = 60 * 60 * 24; // 1 day
 export async function GET(request, { params }) {
   try {
     const resolvedParams = await Promise.resolve(params);
-    const { username } = resolvedParams;
+    const { username, type } = resolvedParams;
     const searchParams = request.nextUrl.searchParams;
     
-    // Extract customization options
+    // Extract customization options with sensible defaults
     const theme = searchParams.get('theme') || 'dark';
-    const width = parseInt(searchParams.get('width'), 10) || 600;
-    const maxSkills = parseInt(searchParams.get('maxSkills'), 10) || 8;
+    const width = parseInt(searchParams.get('width'), 10) || 800;
+    
+    // IMPORTANT: Always set maxSkills to a very high number 
+    // to ensure ALL skills are always displayed
+    const maxSkills = 100; // Effectively no limit
     
     // Common headers for SVG response
     const headers = {
@@ -36,10 +39,10 @@ export async function GET(request, { params }) {
     const decodedUsername = decodeURIComponent(username);
     const studentData = await fetchStudentData(decodedUsername);
     
-    // Generate SVG chart
-    const svgContent = generateTerminalSkills(studentData, theme, {
+    // Generate SVG chart with ALL skills
+    let svgContent = generateTerminalSkills(studentData, theme, {
       width,
-      maxSkills
+      maxSkills // Always using a high value
     });
     
     return new NextResponse(svgContent, { headers });
