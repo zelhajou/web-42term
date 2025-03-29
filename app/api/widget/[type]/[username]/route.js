@@ -60,10 +60,16 @@ export async function GET(request, { params }) {
       throw new Error(`User '${decodedUsername}' not found or API error`);
     }
     
+    // Log project data to help debug
+    console.log(`Project data check for ${decodedUsername}:`, {
+      hasProjectsUsers: Array.isArray(studentData.projects_users),
+      projectsCount: studentData.projects_users?.length || 0
+    });
+    
     // For any widget, fetch the level from studentData
     const level = studentData.directLevelValue || 
-                 (studentData.cursus_users?.find(c => c.cursus?.name === '42cursus')?.level) || 
-                 0;
+                  (studentData.cursus_users?.find(c => c.cursus?.name === '42cursus')?.level) || 
+                  0;
     
     // Add level directly to the student data
     if (level > 0) {
@@ -112,6 +118,23 @@ export async function GET(request, { params }) {
     
     // Log what level we'll be using
     console.log(`Final level for ${decodedUsername}: ${studentData.directLevelValue || 'Not set'}`);
+    
+    // Ensure projects_users exists and is properly formatted
+    if (!studentData.projects_users) {
+      console.warn('No projects_users data found, creating empty array');
+      studentData.projects_users = [];
+    } else if (!Array.isArray(studentData.projects_users)) {
+      console.warn('projects_users is not an array, converting it');
+      try {
+        // Try to convert if it's JSON string or another format
+        studentData.projects_users = Array.isArray(JSON.parse(studentData.projects_users)) 
+          ? JSON.parse(studentData.projects_users) 
+          : [];
+      } catch (e) {
+        console.error('Failed to parse projects_users, creating empty array');
+        studentData.projects_users = [];
+      }
+    }
     
     // Generate appropriate SVG based on widget type
     let svgContent;
