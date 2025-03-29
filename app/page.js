@@ -589,7 +589,7 @@ export default function HomePage() {
         <span>|</span>
         <span>utf-8</span>
       </div>
-      <div>{new Date().toLocaleTimeString()}</div>
+      <div>terminal</div>
     </div>
   </div>
 )}
