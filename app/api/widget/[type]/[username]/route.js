@@ -60,8 +60,12 @@ export async function GET(request, { params }) {
       throw new Error(`User '${decodedUsername}' not found or API error`);
     }
     
-    // Log project data to help debug
-    console.log(`Project data check for ${decodedUsername}:`, {
+    // Log user data to help debug
+    console.log(`Student data check for ${decodedUsername}:`, {
+      hasData: !!studentData,
+      login: studentData.login,
+      correctionPoints: studentData.correction_point || studentData.correctionPoints,
+      wallet: studentData.wallet,
       hasProjectsUsers: Array.isArray(studentData.projects_users),
       projectsCount: studentData.projects_users?.length || 0
     });
@@ -74,6 +78,15 @@ export async function GET(request, { params }) {
     // Add level directly to the student data
     if (level > 0) {
       studentData.directLevelValue = level;
+    }
+    
+    // Ensure correction points and wallet are properly set
+    // The API might return these with different field names, so we handle both cases
+    if (!studentData.correction_point && studentData.correctionPoints) {
+      studentData.correction_point = studentData.correctionPoints;
+    } else if (!studentData.correction_point) {
+      console.warn(`No correction points found for ${decodedUsername}, setting to default`);
+      studentData.correction_point = 0;
     }
     
     // If generating student widget, also fetch level explicitly from specialized endpoint
