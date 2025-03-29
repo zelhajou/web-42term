@@ -22,7 +22,7 @@ const ShareLinks = ({ username, widgetType = 'skills', theme = 'dark' }) => {
   const getBaseUrl = () => {
     return typeof window !== 'undefined' 
       ? window.location.origin 
-      : 'https://42widgets.vercel.app';
+      : 'https://42term.vercel.app';
   };
   
   // Generate widget URL
