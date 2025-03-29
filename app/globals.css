@@ -17,3 +17,44 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+/* Add to your globals.css */
+
+/* Typing animation for the terminal background */
+.typing-animation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  animation: typing 30s linear infinite;
+}
+
+@keyframes typing {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-1000px);
+  }
+}
+
+/* Terminal typing effect */
+.typing-terminal {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid transparent;
+  width: 0;
+  animation: typing-width 4s steps(60, end) forwards;
+}
+
+@keyframes typing-width {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+/* Additional responsive adjustments */
+@media (max-height: 700px) {
+  .typing-animation {
+    gap: 0.5rem;
+  }
+}
