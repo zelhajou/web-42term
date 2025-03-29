@@ -1,4 +1,4 @@
-// app/api/widget/with-level/[type]/[username]/route.js
+// app/api/widget/[type]/[username]/route.js
 
 import { NextResponse } from 'next/server';
 import axios from 'axios';
@@ -140,12 +140,17 @@ export async function GET(request, { params }) {
     // Option to include or exclude piscine projects
     const includePiscine = searchParams.get('includePiscine') === 'true';
     
-    // Common headers for SVG response
+    // Enhanced headers for GitHub compatibility
     const headers = {
       'Content-Type': 'image/svg+xml; charset=utf-8',
-      'Cache-Control': `public, max-age=${CACHE_MAX_AGE}, stale-while-revalidate=${STALE_WHILE_REVALIDATE}`,
+      'Cache-Control': 'max-age=3600',
       'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+      'Access-Control-Allow-Headers': 'Content-Type',
       'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'",
+      'X-Frame-Options': 'deny',
+      'X-XSS-Protection': '1; mode=block'
     };
     
     // Fetch student data
@@ -204,8 +209,12 @@ export async function GET(request, { params }) {
     }
     
     return new NextResponse(errorSvg, {
-      headers: { 'Content-Type': 'image/svg+xml; charset=utf-8' },
-      status: 500
+      headers: { 
+        'Content-Type': 'image/svg+xml; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Access-Control-Allow-Origin': '*'
+      },
+      status: 200 // Return 200 even for errors so GitHub can display the error SVG
     });
   }
 }
