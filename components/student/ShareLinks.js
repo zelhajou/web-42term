@@ -110,24 +110,6 @@ const ShareLinks = ({ username, widgetType = 'skills', theme = 'dark' }) => {
           );
         })}
       </div>
-      
-      {/* Preview */}
-      <div className="mt-5 pt-5 border-t border-[#1E293B]">
-        <div className="flex items-center gap-2 mb-3">
-          <Eye size={16} className="text-blue-400" />
-          <h4 className="text-sm font-semibold text-white">Preview</h4>
-        </div>
-        <div className="bg-[#0F172A] border border-[#1E293B] rounded-lg overflow-hidden">
-          <div className="flex items-center justify-center p-4">
-            <img 
-              src={getWidgetUrl()} 
-              alt={`${username}'s 42 ${widgetType}`} 
-              className="max-w-full h-auto transform hover:scale-[1.01] transition-transform duration-300"
-              style={{ maxHeight: '180px' }}
-            />
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
