@@ -34,6 +34,10 @@ const ignoreFiles = [
   'project_files_structure.md',
   'README.md',
   'package-lock.json',
+  'orekabe_data.json',
+  'zelhajou_data.json',
+  'fetch-student-data.js',
+
 ];
 
 // Result object

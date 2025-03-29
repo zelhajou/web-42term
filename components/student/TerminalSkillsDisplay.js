@@ -1,6 +1,15 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
+import { 
+  Moon, 
+  Sun, 
+  Check, 
+  Clipboard, 
+  ExternalLink, 
+  Sliders, 
+  Link 
+} from 'lucide-react';
 
 export default function TerminalSkillsDisplay({ svgWidget, username, widgetType = 'skills' }) {
   const [copied, setCopied] = useState(false);
@@ -29,40 +38,38 @@ export default function TerminalSkillsDisplay({ svgWidget, username, widgetType 
   if (!svgWidget) return null;
   
   return (
-    <div className="w-full bg-[#1a1a1a] border border-[#333] rounded-md p-4 h-full flex flex-col">
-      {/* Widget Preview */}
-      <div className="border border-[#333] rounded-md p-2 bg-[#121212] mb-4 overflow-auto flex-grow flex items-center justify-center">
-        <div 
-          dangerouslySetInnerHTML={{ __html: svgWidget }} 
-          className="transform transition hover:scale-[1.01] duration-200"
-        />
-      </div>
+    <div className="w-full bg-[#111827] border border-[#1E293B] rounded-xl p-5 h-full flex flex-col shadow-lg">
       
-      <div className="space-y-3 flex-shrink-0">
+      <div className="space-y-4 flex-shrink-0">
         {/* Controls row with theme selector and copy button */}
-        <div className="flex gap-3 items-end">
+        <div className="flex gap-4 items-end">
           {/* Theme Selector */}
           <div className="flex-grow">
-            <label className="block text-[10px] text-gray-500 mb-1">THEME</label>
+            <label className="block text-xs text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <Sliders size={14} />
+              Theme
+            </label>
             <div className="flex gap-2">
               <button
                 onClick={() => setSelectedTheme('dark')}
-                className={`px-2 py-1 rounded text-xs transition-colors flex-1 ${
+                className={`px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-1.5 ${
                   selectedTheme === 'dark' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-[#242424] text-gray-400 hover:bg-[#2d2d2d]'
+                    ? 'bg-[#1E293B] text-white ring-1 ring-[#3B82F6]' 
+                    : 'bg-[#0F172A] text-gray-400 hover:bg-[#1E293B] hover:text-gray-300'
                 }`}
               >
+                <Moon size={14} />
                 Dark
               </button>
               <button
                 onClick={() => setSelectedTheme('light')}
-                className={`px-2 py-1 rounded text-xs transition-colors flex-1 ${
+                className={`px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-1.5 ${
                   selectedTheme === 'light' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-[#242424] text-gray-400 hover:bg-[#2d2d2d]'
+                    ? 'bg-[#1E293B] text-white ring-1 ring-[#3B82F6]' 
+                    : 'bg-[#0F172A] text-gray-400 hover:bg-[#1E293B] hover:text-gray-300'
                 }`}
               >
+                <Sun size={14} />
                 Light
               </button>
             </div>
@@ -71,42 +78,46 @@ export default function TerminalSkillsDisplay({ svgWidget, username, widgetType 
           {/* Copy button */}
           <button
             onClick={copyToClipboard}
-            className={`px-3 py-1 rounded text-white text-xs transition-colors h-[26px] flex items-center ${
+            className={`px-3 py-1.5 rounded-lg text-white text-xs transition-colors flex items-center gap-1.5 ${
               copied 
                 ? 'bg-green-600' 
-                : 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-[#3B82F6] hover:bg-[#2563EB]'
             }`}
           >
             {copied ? (
-              <span className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
+              <>
+                <Check size={14} />
                 Copied
-              </span>
-            ) : 'Copy Markdown'}
+              </>
+            ) : (
+              <>
+                <Clipboard size={14} />
+                Copy Markdown
+              </>
+            )}
           </button>
         </div>
         
         {/* URL Preview */}
         <div>
-          <label className="block text-[10px] text-gray-500 mb-1">MARKDOWN CODE</label>
-          <div className="bg-[#242424] rounded text-xs text-gray-400 px-2 py-1.5 font-mono overflow-x-auto whitespace-nowrap">
+          <label className="block text-xs text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Link size={14} />
+            Markdown code
+          </label>
+          <div className="bg-[#0F172A] rounded-lg text-xs text-gray-400 px-3 py-2.5 font-mono overflow-x-auto whitespace-nowrap">
             {generateGithubCode()}
           </div>
         </div>
         
-        {/* New Tab Link */}
-        <div className="text-center">
+        {/* Open in new tab button */}
+        <div className="flex justify-center mt-4">
           <a
             href={`/api/widget/${widgetType}/${username}?theme=${selectedTheme}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center px-2 py-1 bg-[#242424] text-gray-400 rounded text-xs hover:bg-[#2d2d2d] transition-colors"
+            className="inline-flex items-center px-3 py-1.5 bg-[#1E293B] text-gray-300 rounded-lg text-xs hover:bg-[#2D3F58] transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
+            <ExternalLink size={14} className="mr-1.5" />
             Open in new tab
           </a>
         </div>
