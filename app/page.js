@@ -218,7 +218,7 @@ export default function HomePage() {
             </span>
           </div>
           <a 
-            href="https://github.com/42widgets/terminal" 
+            href="https://github.com/zelhajou" 
             target="_blank" 
             rel="noopener noreferrer"
             className="text-gray-400 hover:text-white transition-colors duration-200 flex items-center gap-2"
