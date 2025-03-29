@@ -5,6 +5,13 @@ import { fetchStudentData } from '@/lib/api';
 import { generateTerminalSkills, generateErrorSVG as generateSkillsErrorSVG } from '@/lib/generators/terminalSkillsGenerator';
 import { generateTerminalProjects, generateErrorSVG as generateProjectsErrorSVG } from '@/lib/generators/terminalProjectsGenerator';
 import { generateTerminalStudent, generateErrorSVG as generateStudentErrorSVG } from '@/lib/generators/terminalStudentGenerator';
+import { getUserLevel } from '@/lib/utils/levelFetcher';
+
+/**
+ * Cache control constants
+ */
+const CACHE_MAX_AGE = 60 * 60; // 1 hour
+const STALE_WHILE_REVALIDATE = 60 * 60 * 24; // 1 day
 
 /**
  * API handler for the terminal-style widgets with GitHub compatibility
@@ -29,13 +36,20 @@ export async function GET(request, { params }) {
     // CRITICAL: GitHub-friendly headers
     const headers = {
       'Content-Type': 'image/svg+xml; charset=utf-8',
-      'Cache-Control': 'no-cache',
+      'Cache-Control': `public, max-age=${CACHE_MAX_AGE}, stale-while-revalidate=${STALE_WHILE_REVALIDATE}`,
       'Pragma': 'no-cache',
       'Expires': '0',
       'Access-Control-Allow-Origin': '*',
       'X-Content-Type-Options': 'nosniff',
       'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'"
     };
+    
+    // Environment check - log variables availability
+    console.log('Environment check:', {
+      apiUrlExists: !!process.env.NEXT_PUBLIC_42_API_URL,
+      clientIdExists: !!process.env.FT_CLIENT_ID,
+      clientSecretExists: !!process.env.FT_CLIENT_SECRET
+    });
     
     // Fetch student data
     const decodedUsername = decodeURIComponent(username);
@@ -48,13 +62,56 @@ export async function GET(request, { params }) {
     
     // For any widget, fetch the level from studentData
     const level = studentData.directLevelValue || 
-                  (studentData.cursus_users?.find(c => c.cursus?.name === '42cursus')?.level) || 
-                  0;
+                 (studentData.cursus_users?.find(c => c.cursus?.name === '42cursus')?.level) || 
+                 0;
     
     // Add level directly to the student data
     if (level > 0) {
       studentData.directLevelValue = level;
     }
+    
+    // If generating student widget, also fetch level explicitly from specialized endpoint
+    if (type === 'student') {
+      try {
+        console.log(`Explicitly fetching level for ${decodedUsername}`);
+        const userLevel = await getUserLevel(decodedUsername);
+        
+        // Inject the level into the studentData
+        if (userLevel > 0) {
+          console.log(`Setting explicit level: ${userLevel} for ${decodedUsername}`);
+          
+          // Make sure we have a cursus_users array
+          if (!studentData.cursus_users) {
+            studentData.cursus_users = [];
+          }
+          
+          // Find if we already have a 42cursus entry
+          const existingCursus = studentData.cursus_users.find(
+            c => c.cursus?.name === '42cursus' || c.cursus?.id === 21
+          );
+          
+          if (existingCursus) {
+            // Update the existing entry
+            existingCursus.level = userLevel;
+          } else {
+            // Add a new 42cursus entry
+            studentData.cursus_users.push({
+              cursus: { name: '42cursus', id: 21 },
+              level: userLevel
+            });
+          }
+          
+          // Also set directLevelValue for consistency
+          studentData.directLevelValue = userLevel;
+        }
+      } catch (levelError) {
+        console.error(`Error fetching level for ${decodedUsername}:`, levelError);
+        // We continue anyway, as we can still generate a widget without the level
+      }
+    }
+    
+    // Log what level we'll be using
+    console.log(`Final level for ${decodedUsername}: ${studentData.directLevelValue || 'Not set'}`);
     
     // Generate appropriate SVG based on widget type
     let svgContent;

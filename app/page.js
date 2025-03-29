@@ -603,12 +603,12 @@ export default function HomePage() {
             <div className="flex items-center mb-2 sm:mb-0">
               <span>Created with</span>
               <Heart size={12} className="mx-1 text-red-500" />
-              <span>by 42term</span>
+              <span>by Zelhajou 1337 student</span>
             </div>
             <div className="flex items-center gap-3">
               <span>© {new Date().getFullYear()} 42term</span>
               <span className="hidden sm:inline">•</span>
-              <span className="hidden sm:inline">Not affiliated with 42 School</span>
+              <span className="hidden sm:inline">Not affiliated with 42 School Projects</span>
             </div>
           </div>
         </div>
