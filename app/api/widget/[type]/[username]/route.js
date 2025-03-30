@@ -183,29 +183,20 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error('Widget generation error:', error);
     
-    // Return an error SVG based on widget type
-    let errorSvg;
-    if (params.type === 'projects') {
-      errorSvg = generateProjectsErrorSVG(error.message || 'Failed to generate projects widget');
-    } else if (params.type === 'student') {
-      errorSvg = generateStudentErrorSVG(error.message || 'Failed to generate student widget');
-    } else {
-      errorSvg = generateSkillsErrorSVG(error.message || 'Failed to generate skills widget');
-    }
-    
-    // Make sure error SVG is also GitHub-compatible
-    if (errorSvg.startsWith('<?xml')) {
-      errorSvg = errorSvg.substring(errorSvg.indexOf('<svg'));
-    }
-    
-    return new NextResponse(errorSvg, {
-      headers: { 
-        'Content-Type': 'image/svg+xml; charset=utf-8',
-        'Cache-Control': 'no-cache',
-        'Access-Control-Allow-Origin': '*',
-        'X-Content-Type-Options': 'nosniff'
+    // Instead of generating an error SVG, return a proper error response
+    return NextResponse.json(
+      { 
+        error: 'Failed to generate widget',
+        message: error.message || 'An unexpected error occurred' 
       },
-      status: 200 // Return 200 even for errors so GitHub can display the error SVG
-    });
+      { 
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Access-Control-Allow-Origin': '*'
+        }
+      }
+    );
   }
 }

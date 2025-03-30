@@ -28,8 +28,9 @@ import {
   Download,
   Check,
 } from "lucide-react";
-import DownloadModal from '@/components/DownloadModal';
-
+import DownloadModal from "@/components/DownloadModal";
+import TerminalLoader from "@/components/TerminalLoader";
+import ErrorModal from "@/components/ErrorModal";
 
 export default function HomePage() {
   const [username, setUsername] = useState("");
@@ -44,6 +45,12 @@ export default function HomePage() {
   const [showCursor, setShowCursor] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [isThemeChanging, setIsThemeChanging] = useState(false);
+  const [themeCache, setThemeCache] = useState({});
+  
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
+const [errorMessage, setErrorMessage] = useState('');
 
   // Typing animation for the default terminal
   useEffect(() => {
@@ -77,7 +84,7 @@ export default function HomePage() {
 
   const CopiedToast = ({ isVisible }) => {
     if (!isVisible) return null;
-    
+
     return (
       <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-md shadow-lg flex items-center gap-2 animate-fade-in z-50">
         <Check size={16} />
@@ -88,72 +95,103 @@ export default function HomePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     if (!username.trim()) {
-      setError("Please enter a valid username");
+      setError('Please enter a valid username');
       return;
     }
-
+    
     // Validate username format
     if (!/^[a-z0-9-]+$/i.test(username)) {
-      setError(
-        "Please enter a valid 42 intra username (letters, numbers, and hyphens only)"
-      );
+      setError('Please enter a valid 42 intra username (letters, numbers, and hyphens only)');
       return;
     }
-
+    
     setIsLoading(true);
-    setError("");
-
+    setError('');
+    // Clear theme cache when submitting a new username
+    setThemeCache({});
+    
     try {
       // Fetch student data from our API with properly encoded username
       const encodedUsername = encodeURIComponent(username.trim());
       const response = await axios.get(`/api/student/${encodedUsername}`);
-
+      
+      // If we have an error property in the response, it means the API returned an error
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+      
       // Generate the SVG URL with proper type, theme and parameters
-      const baseUrl =
-        typeof window !== "undefined" ? window.location.origin : "";
-
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      
       // Add maxProjects parameter to ensure we show all validated projects
-      // For projects visualization, never include Piscine projects by default
+      // For projects visualization, never include Piscine projects by default 
       const visualizationUrl = `${baseUrl}/api/widget/${displayType}/${encodedUsername}?theme=${selectedTheme}&maxProjects=200`;
-
+      
       // Fetch the SVG directly from the endpoint
       const svgResponse = await axios.get(visualizationUrl);
       const svg = svgResponse.data;
-
+      
       setSvgContent(svg);
       setCurrentUsername(username);
       // Reset share options panel when generating new visualization
       setShowShareOptions(false);
+      
     } catch (err) {
-      console.error("Error:", err);
-
-      // Handle specific error types
-      let errorMessage = "Error generating terminal visualization";
-
+      console.error('Error:', err);
+      
+      // Handle specific error types with better messaging
+      let errorMessage = 'Error generating terminal visualization';
+      
       if (err.response) {
         if (err.response.status === 429) {
-          errorMessage = "Rate limit exceeded. Please try again in a minute.";
+          errorMessage = 'Rate limit exceeded. Please try again in a minute.';
         } else if (err.response.status === 404) {
+          // Make this explicitly about the username not being found
           errorMessage = `Username '${username}' not found. Please check the spelling.`;
         } else if (err.response.data?.error) {
           errorMessage = err.response.data.error;
         }
       } else if (err.message) {
-        errorMessage = err.message;
+        // Check for common error patterns
+        if (err.message.includes('404') || 
+            err.message.toLowerCase().includes('not found')) {
+          errorMessage = `Username '${username}' not found. Please check the spelling.`;
+        } else {
+          errorMessage = err.message;
+        }
       }
-
+      
+      // Set error for the inline message
       setError(errorMessage);
-      setSvgContent(generateErrorSVG(errorMessage, selectedTheme));
+      
+      // Show the error modal for better visibility
+      setErrorMessage(errorMessage);
+      setShowErrorModal(true);
+      
+      // Clear any previous SVG content so we don't show error SVG
+      setSvgContent('');
+      
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleThemeChange = (theme) => {
     setSelectedTheme(theme);
+    setIsThemeChanging(true);
+
     if (currentUsername) {
+      // Create a cache key from username, displayType and theme
+      const cacheKey = `${currentUsername}-${displayType}-${theme}`;
+
+      // Check if we have a cached version
+      if (themeCache[cacheKey]) {
+        setSvgContent(themeCache[cacheKey]);
+        setIsThemeChanging(false);
+        return;
+      }
+
       try {
         // Generate the URL with the selected type and new theme
         const encodedUsername = encodeURIComponent(currentUsername.trim());
@@ -167,14 +205,24 @@ export default function HomePage() {
         axios
           .get(visualizationUrl)
           .then((response) => {
+            // Store in cache
+            setThemeCache((prev) => ({
+              ...prev,
+              [cacheKey]: response.data,
+            }));
             setSvgContent(response.data);
+            setIsThemeChanging(false);
           })
           .catch((err) => {
             console.error("Error updating theme:", err);
+            setIsThemeChanging(false);
           });
       } catch (err) {
         console.error("Error updating theme:", err);
+        setIsThemeChanging(false);
       }
+    } else {
+      setIsThemeChanging(false);
     }
   };
 
@@ -270,7 +318,11 @@ export default function HomePage() {
             <div className="bg-[#161B22] rounded-lg overflow-hidden p-1 shadow-md">
               <div className="flex">
                 <button
-                  onClick={() => setDisplayType("student")}
+                  onClick={() => {
+                    setDisplayType("student");
+                    // Clear theme cache when changing display type
+                    setThemeCache({});
+                  }}
                   className={`py-3 px-4 text-sm rounded-md flex-1 flex flex-col items-center gap-2 transition-colors ${
                     displayType === "student"
                       ? "bg-indigo-600/90 text-white"
@@ -453,18 +505,25 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Main content area - Terminal Display */}
         <div className="flex-grow p-4 flex items-center justify-center overflow-auto">
           {svgContent ? (
             <div className="flex flex-col max-w-full w-full h-full">
-              {/* SVG content display remains the same */}
-              <div className="bg-[#161B22] border border-gray-800 rounded-lg p-6 mb-4 overflow-hidden shadow-lg flex-grow">
+              {/* SVG content display */}
+              <div className="bg-[#161B22] border border-gray-800 rounded-lg p-6 mb-4 overflow-hidden shadow-lg flex-grow relative">
+                {isThemeChanging && (
+                  <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-10">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+                  </div>
+                )}
                 <div
                   dangerouslySetInnerHTML={{ __html: svgContent }}
-                  className="transform hover:scale-[1.01] transition-transform duration-300 flex justify-center h-full"
+                  className={`transform hover:scale-[1.01] transition-transform duration-300 flex justify-center h-full ${
+                    isThemeChanging ? "opacity-40" : "opacity-100"
+                  }`}
                 />
               </div>
 
+              {/* Controls section */}
               <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-[#161B22] border border-gray-800 rounded-lg p-4 shadow-md">
                 {/* Theme controls */}
                 <div className="flex items-center gap-2">
@@ -507,17 +566,24 @@ export default function HomePage() {
                     {showShareOptions ? "Hide Options" : "Share Options"}
                   </button>
 
-                  <button 
+                  <button
                     className={`px-3 py-1.5 text-xs rounded-md text-white flex items-center gap-1.5 flex-1 sm:flex-auto justify-center ${typeColors.bg} ${typeColors.hoverBg}`}
                     onClick={() => {
-                      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-                      const visualizationUrl = `${baseUrl}/api/widget/${displayType}/${encodeURIComponent(currentUsername)}?theme=${selectedTheme}`;
-                      
+                      if (!currentUsername) return;
+
+                      const baseUrl =
+                        typeof window !== "undefined"
+                          ? window.location.origin
+                          : "";
+                      const visualizationUrl = `${baseUrl}/api/widget/${displayType}/${encodeURIComponent(
+                        currentUsername
+                      )}?theme=${selectedTheme}`;
+
                       // Generate markdown with link to application root domain
                       const markdown = `[![${currentUsername}'s 42 ${getDisplayTypeName()}](${visualizationUrl})](${baseUrl})`;
-                      
+
                       navigator.clipboard.writeText(markdown);
-                      
+
                       // Show toast notification
                       setShowCopiedToast(true);
                       setTimeout(() => setShowCopiedToast(false), 2000);
@@ -527,10 +593,15 @@ export default function HomePage() {
                     Copy Markdown
                   </button>
 
-                  {/* Updated download button to open modal */}
+                  {/* Download button */}
                   <button
-                    onClick={() => setShowDownloadModal(true)}
+                    onClick={() => {
+                      if (currentUsername) {
+                        setShowDownloadModal(true);
+                      }
+                    }}
                     className="px-3 py-1.5 text-xs rounded-md bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 flex-1 sm:flex-auto justify-center"
+                    disabled={!currentUsername}
                     title="Download image"
                   >
                     <Download size={14} />
@@ -570,135 +641,152 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Terminal Content - Minimalist Design */}
+              {/* Terminal Content */}
               <div className="flex-grow flex flex-col justify-center items-center relative overflow-hidden bg-gradient-to-b from-[#0A0C10] to-[#0F1723]">
-                {/* Terminal Background Animation - Fills the entire space */}
-                <div className="absolute inset-0 overflow-hidden opacity-5">
-                  <div className="typing-animation font-mono text-sm text-gray-400 p-8">
-                    <div>$ cd ~/42school</div>
-                    <div>$ ls -la</div>
-                    <div className="text-green-400">total 24</div>
-                    <div>drwxr-xr-x 3 user staff 96 Mar 29 10:42 .</div>
-                    <div>drwxr-xr-x 5 user staff 160 Mar 29 09:12 ..</div>
-                    <div>
-                      -rwxr-xr-x 1 user staff 285 Mar 29 10:42 profile.terminal
+                {isLoading ? (
+                  // Show terminal loader when loading
+                  <TerminalLoader
+                    username={username || "user"}
+                    widgetType={displayType}
+                    theme={selectedTheme}
+                  />
+                ) : (
+                  // Show the default terminal UI when not loading
+                  <>
+                    {/* Terminal Background Animation */}
+                    <div className="absolute inset-0 overflow-hidden opacity-5">
+                      <div className="typing-animation font-mono text-sm text-gray-400 p-8">
+                        <div>$ cd ~/42school</div>
+                        <div>$ ls -la</div>
+                        <div className="text-green-400">total 24</div>
+                        <div>drwxr-xr-x 3 user staff 96 Mar 29 10:42 .</div>
+                        <div>drwxr-xr-x 5 user staff 160 Mar 29 09:12 ..</div>
+                        <div>
+                          -rwxr-xr-x 1 user staff 285 Mar 29 10:42
+                          profile.terminal
+                        </div>
+                        <div>
+                          -rwxr-xr-x 1 user staff 312 Mar 29 10:42
+                          projects.terminal
+                        </div>
+                        <div>
+                          -rwxr-xr-x 1 user staff 248 Mar 29 10:42
+                          skills.terminal
+                        </div>
+                        <div>$ ./profile.terminal --user=student</div>
+                        <div className="text-green-400">generating...</div>
+                        <div>$ ./projects.terminal --user=student</div>
+                        <div className="text-green-400">generating...</div>
+                        <div>$ ./skills.terminal --user=student</div>
+                        <div className="text-green-400">generating...</div>
+                        <div>$ echo $?</div>
+                        <div className="text-green-400">0</div>
+                      </div>
                     </div>
-                    <div>
-                      -rwxr-xr-x 1 user staff 312 Mar 29 10:42 projects.terminal
-                    </div>
-                    <div>
-                      -rwxr-xr-x 1 user staff 248 Mar 29 10:42 skills.terminal
-                    </div>
-                    <div>$ ./profile.terminal --user=student</div>
-                    <div className="text-green-400">generating...</div>
-                    <div>$ ./projects.terminal --user=student</div>
-                    <div className="text-green-400">generating...</div>
-                    <div>$ ./skills.terminal --user=student</div>
-                    <div className="text-green-400">generating...</div>
-                    <div>$ echo $?</div>
-                    <div className="text-green-400">0</div>
-                  </div>
-                </div>
 
-                {/* Main Command Terminal - Center element */}
-                <div className="z-10 py-6 w-full max-w-xl">
-                  <div className="w-full bg-[#161B22] border border-gray-800 rounded-md shadow-lg overflow-hidden mx-auto">
-                    <div className="bg-[#1E293B] px-3 py-1.5 border-b border-gray-800 flex items-center justify-between">
-                      <div className="text-xs text-gray-500 font-mono">
-                        command
-                      </div>
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 rounded-full bg-gray-700"></div>
-                        <div className="w-2 h-2 rounded-full bg-gray-700"></div>
-                        <div className="w-2 h-2 rounded-full bg-gray-700"></div>
+                    {/* Main Command Terminal */}
+                    <div className="z-10 py-6 w-full max-w-xl">
+                      <div className="w-full bg-[#161B22] border border-gray-800 rounded-md shadow-lg overflow-hidden mx-auto">
+                        <div className="bg-[#1E293B] px-3 py-1.5 border-b border-gray-800 flex items-center justify-between">
+                          <div className="text-xs text-gray-500 font-mono">
+                            command
+                          </div>
+                          <div className="flex gap-1">
+                            <div className="w-2 h-2 rounded-full bg-gray-700"></div>
+                            <div className="w-2 h-2 rounded-full bg-gray-700"></div>
+                            <div className="w-2 h-2 rounded-full bg-gray-700"></div>
+                          </div>
+                        </div>
+
+                        {/* Basic command sequence */}
+                        <div className="p-4 font-mono text-gray-300 text-sm space-y-2">
+                          <div className="flex items-start">
+                            <span className="text-indigo-500 mr-2 w-4 flex-shrink-0">
+                              $
+                            </span>
+                            <span>pwd</span>
+                          </div>
+                          <div className="flex items-start">
+                            <span className="text-indigo-500 mr-2 w-4 flex-shrink-0">
+                              $
+                            </span>
+                            <span>cd 42term</span>
+                          </div>
+                          <div className="flex items-start">
+                            <span className="text-indigo-500 mr-2 w-4 flex-shrink-0">
+                              $
+                            </span>
+                            <span>chmod +x generate.sh</span>
+                          </div>
+                          <div className="flex items-start">
+                            <span className="text-indigo-500 mr-2 w-4 flex-shrink-0">
+                              $
+                            </span>
+                            <span className="typing-terminal">
+                              ./generate.sh --user=
+                              <span className="text-cyan-400">username</span>{" "}
+                              --type=
+                              <span className="text-pink-400">
+                                {displayType}
+                              </span>{" "}
+                              --theme=
+                              <span className="text-green-400">
+                                {selectedTheme}
+                              </span>
+                              <span
+                                className={`inline-block w-2 h-5 bg-indigo-400 ml-0.5 ${
+                                  showCursor ? "opacity-100" : "opacity-0"
+                                }`}
+                              ></span>
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Basic command sequence */}
-                    <div className="p-4 font-mono text-gray-300 text-sm space-y-2">
-                      <div className="flex items-start">
-                        <span className="text-indigo-500 mr-2 w-4 flex-shrink-0">
-                          $
-                        </span>
-                        <span>pwd</span>
-                      </div>
-                      <div className="flex items-start">
-                        <span className="text-indigo-500 mr-2 w-4 flex-shrink-0">
-                          $
-                        </span>
-                        <span>cd 42term</span>
-                      </div>
-                      <div className="flex items-start">
-                        <span className="text-indigo-500 mr-2 w-4 flex-shrink-0">
-                          $
-                        </span>
-                        <span>chmod +x generate.sh</span>
-                      </div>
-                      <div className="flex items-start">
-                        <span className="text-indigo-500 mr-2 w-4 flex-shrink-0">
-                          $
-                        </span>
-                        <span className="typing-terminal">
-                          ./generate.sh --user=
-                          <span className="text-cyan-400">username</span>{" "}
-                          --type=
-                          <span className="text-pink-400">{displayType}</span>{" "}
-                          --theme=
-                          <span className="text-green-400">
-                            {selectedTheme}
-                          </span>
-                          <span
-                            className={`inline-block w-2 h-5 bg-indigo-400 ml-0.5 ${
-                              showCursor ? "opacity-100" : "opacity-0"
-                            }`}
-                          ></span>
-                        </span>
-                      </div>
+                    {/* Minimalist Feature Indicators */}
+                    <div className="z-10 mt-8 flex justify-center gap-8 text-gray-600 text-xs">
+                      <button
+                        onClick={() => setDisplayType("student")}
+                        className={`flex flex-col items-center gap-1 ${
+                          displayType === "student"
+                            ? "text-indigo-400"
+                            : "hover:text-indigo-400"
+                        } transition-colors`}
+                      >
+                        <User size={20} />
+                        <span>profile</span>
+                      </button>
+                      <button
+                        onClick={() => setDisplayType("projects")}
+                        className={`flex flex-col items-center gap-1 ${
+                          displayType === "projects"
+                            ? "text-pink-400"
+                            : "hover:text-pink-400"
+                        } transition-colors`}
+                      >
+                        <FolderKanban size={20} />
+                        <span>projects</span>
+                      </button>
+                      <button
+                        onClick={() => setDisplayType("skills")}
+                        className={`flex flex-col items-center gap-1 ${
+                          displayType === "skills"
+                            ? "text-cyan-400"
+                            : "hover:text-cyan-400"
+                        } transition-colors`}
+                      >
+                        <CircuitBoard size={20} />
+                        <span>skills</span>
+                      </button>
                     </div>
-                  </div>
-                </div>
-
-                {/* Minimalist Feature Indicators */}
-                <div className="z-10 mt-8 flex justify-center gap-8 text-gray-600 text-xs">
-                  <button
-                    onClick={() => setDisplayType("student")}
-                    className={`flex flex-col items-center gap-1 ${
-                      displayType === "student"
-                        ? "text-indigo-400"
-                        : "hover:text-indigo-400"
-                    } transition-colors`}
-                  >
-                    <User size={20} />
-                    <span>profile</span>
-                  </button>
-                  <button
-                    onClick={() => setDisplayType("projects")}
-                    className={`flex flex-col items-center gap-1 ${
-                      displayType === "projects"
-                        ? "text-pink-400"
-                        : "hover:text-pink-400"
-                    } transition-colors`}
-                  >
-                    <FolderKanban size={20} />
-                    <span>projects</span>
-                  </button>
-                  <button
-                    onClick={() => setDisplayType("skills")}
-                    className={`flex flex-col items-center gap-1 ${
-                      displayType === "skills"
-                        ? "text-cyan-400"
-                        : "hover:text-cyan-400"
-                    } transition-colors`}
-                  >
-                    <CircuitBoard size={20} />
-                    <span>skills</span>
-                  </button>
-                </div>
+                  </>
+                )}
               </div>
 
               {/* Terminal Footer */}
               <div className="bg-[#161B22] px-4 py-1.5 border-t border-gray-800 flex justify-between items-center text-[10px] text-gray-500">
-                <div>ready</div>
+                <div>{isLoading ? "loading" : "ready"}</div>
                 <div className="flex items-center gap-2">
                   <span>bash</span>
                   <span>|</span>
@@ -730,18 +818,25 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-        {/* Download Modal */}
-        {svgContent && (
-          <DownloadModal
-            isOpen={showDownloadModal}
-            onClose={() => setShowDownloadModal(false)}
-            username={currentUsername}
-            widgetType={displayType}
-            theme={selectedTheme}
-          />
-        )}
+      {/* Download Modal */}
+      {svgContent && (
+        <DownloadModal
+          isOpen={showDownloadModal}
+          onClose={() => setShowDownloadModal(false)}
+          username={currentUsername}
+          widgetType={displayType}
+          theme={selectedTheme}
+        />
+      )}
 
       <CopiedToast isVisible={showCopiedToast} />
+
+     {/* Error Modal */}
+      <ErrorModal 
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        errorMessage={errorMessage}
+      />
     </div>
   );
 }

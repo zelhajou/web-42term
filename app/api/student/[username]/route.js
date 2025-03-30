@@ -1,3 +1,5 @@
+// Update app/api/student/[username]/route.js
+
 import { NextResponse } from 'next/server';
 import { fetchStudentData } from '@/lib/api';
 
@@ -23,9 +25,27 @@ export async function GET(request, { params }) {
     return NextResponse.json(studentData);
   } catch (error) {
     console.error('API Error:', error);
+    
+    // Enhanced error handling with proper status codes
+    let status = 500;
+    let errorMessage = error.message || 'Failed to fetch student data';
+    
+    // Determine error type
+    if (errorMessage.toLowerCase().includes('not found') || 
+        errorMessage.toLowerCase().includes('doesn\'t exist') ||
+        errorMessage.toLowerCase().includes('does not exist')) {
+      status = 404;
+      // Make sure the error message is explicitly about a username not being found
+      if (!errorMessage.toLowerCase().includes('username')) {
+        errorMessage = `Username '${params.username}' not found. Please check the spelling.`;
+      }
+    } else if (errorMessage.toLowerCase().includes('rate limit')) {
+      status = 429;
+    }
+    
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch student data' },
-      { status: 500 }
+      { error: errorMessage },
+      { status }
     );
   }
 }

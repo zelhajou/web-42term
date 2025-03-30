@@ -95,10 +95,20 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error('Download conversion error:', error);
     
-    // Return a simple error JSON
+    // Return a JSON error response instead of an error image
     return NextResponse.json(
-      { error: 'Failed to generate downloadable image', message: error.message },
-      { status: 500 }
+      { 
+        error: 'Failed to generate downloadable image', 
+        message: error.message || 'An unexpected error occurred'
+      },
+      { 
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Access-Control-Allow-Origin': '*'
+        }
+      }
     );
   }
 }
