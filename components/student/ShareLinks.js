@@ -9,14 +9,18 @@ import {
   ExternalLink, 
   Users, 
   Eye, 
-  Check 
+  Check,
+  Download,
+  Image
 } from 'lucide-react';
+import DownloadModal from '@/components/DownloadModal';
 
 /**
  * ShareLinks component with terminal style
  */
 const ShareLinks = ({ username, widgetType = 'skills', theme = 'dark' }) => {
   const [copiedFormat, setCopiedFormat] = useState(null);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   
   // Get base URL
   const getBaseUrl = () => {
@@ -70,12 +74,12 @@ const ShareLinks = ({ username, widgetType = 'skills', theme = 'dark' }) => {
     markdown: {
       label: 'Markdown (GitHub, GitLab)',
       icon: <FileText size={14} />,
-      format: `![${username}'s 42 ${widgetType}](${getWidgetUrl()})`
+      format: `[![${username}'s 42 ${widgetType}](${getWidgetUrl()})](${getBaseUrl()})`
     },
     html: {
       label: 'HTML',
       icon: <FileCode2 size={14} />,
-      format: `<img src="${getWidgetUrl()}" alt="${username}'s 42 ${widgetType}" />`
+      format: `<a href="${getBaseUrl()}"><img src="${getWidgetUrl()}" alt="${username}'s 42 ${widgetType}" /></a>`
     },
     markdown_linked: {
       label: 'Markdown (With Profile Link)',
@@ -87,11 +91,6 @@ const ShareLinks = ({ username, widgetType = 'skills', theme = 'dark' }) => {
       icon: <Link2 size={14} />,
       format: getWidgetUrl()
     },
-    bbcode: {
-      label: 'BBCode (Forums)',
-      icon: <Users size={14} />,
-      format: `[img]${getWidgetUrl()}[/img]`
-    }
   };
   
   // Copy format to clipboard
@@ -152,26 +151,30 @@ const ShareLinks = ({ username, widgetType = 'skills', theme = 'dark' }) => {
         })}
       </div>
       
-      {/* Preview */}
-      <div className="mt-4 pt-4 border-t border-gray-800">
+      {/* Download options */}
+      <div className="mt-6 border-t border-gray-800 pt-4">
         <div className="flex items-center gap-2 mb-3">
-          <Eye size={16} className={typeColors.text} />
-          <h4 className="text-sm font-semibold text-white">Preview</h4>
+          <Download size={16} className={typeColors.text} />
+          <h4 className="text-sm font-semibold text-white">Download Options</h4>
         </div>
-        <div className="bg-[#0D1117] border border-gray-800 rounded-md overflow-hidden">
-          <div className="flex items-center justify-center p-4">
-            <img 
-              src={getWidgetUrl()} 
-              alt={`${username}'s 42 ${widgetType}`} 
-              className="max-w-full h-auto"
-              style={{ maxHeight: '180px' }}
-            />
-          </div>
-        </div>
-        <div className="mt-3 text-center text-xs text-gray-500">
-          Add this visualization to your GitHub profile README.md
-        </div>
+        
+        <button 
+          onClick={() => setShowDownloadModal(true)}
+          className={`w-full flex items-center justify-center gap-1.5 px-3 py-2.5 text-white ${typeColors.bg} ${typeColors.hoverBg} rounded-md text-sm transition-colors`}
+        >
+          <Download size={14} />
+          Download Widget
+        </button>
       </div>
+      
+      {/* Download Modal */}
+      <DownloadModal
+        isOpen={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
+        username={username}
+        widgetType={widgetType}
+        theme={theme}
+      />
     </div>
   );
 };
