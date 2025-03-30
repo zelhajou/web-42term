@@ -43,7 +43,7 @@ export async function GET(request, { params }) {
     if (type === 'projects') {
       svgContent = generateTerminalProjects(studentData, theme, {
         width,
-        maxProjects: 142,
+        maxProjects: 200,
         includePiscine: false
       });
     } else if (type === 'student') {

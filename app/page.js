@@ -93,7 +93,7 @@ export default function HomePage() {
       
       // Add maxProjects parameter to ensure we show all validated projects
       // For projects visualization, never include Piscine projects by default 
-      const visualizationUrl = `${baseUrl}/api/widget/${displayType}/${encodedUsername}?theme=${selectedTheme}&maxProjects=50`;
+      const visualizationUrl = `${baseUrl}/api/widget/${displayType}/${encodedUsername}?theme=${selectedTheme}&maxProjects=200`;
       
       // Fetch the SVG directly from the endpoint
       const svgResponse = await axios.get(visualizationUrl);
@@ -138,7 +138,7 @@ export default function HomePage() {
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
         
         // Keep the maxProjects parameter
-        const visualizationUrl = `${baseUrl}/api/widget/${displayType}/${encodedUsername}?theme=${theme}&maxProjects=50`;
+        const visualizationUrl = `${baseUrl}/api/widget/${displayType}/${encodedUsername}?theme=${theme}&maxProjects=200`;
         
         // Fetch the updated SVG
         axios.get(visualizationUrl)

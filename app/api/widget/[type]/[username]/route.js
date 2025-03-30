@@ -28,7 +28,7 @@ export async function GET(request, { params }) {
     
     // Configure max items to display
     const maxSkills = parseInt(searchParams.get('maxSkills'), 10) || 100;
-    const maxProjects = parseInt(searchParams.get('maxProjects'), 10) || 142;
+    const maxProjects = parseInt(searchParams.get('maxProjects'), 10) || 200;
     
     // Option to include or exclude piscine projects
     const includePiscine = searchParams.get('includePiscine') === 'true';
