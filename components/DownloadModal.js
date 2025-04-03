@@ -5,7 +5,6 @@ import {
   X, 
   Download, 
   FileCode2, 
-  Image, 
   Terminal,
   Check,
   AlertTriangle
@@ -19,7 +18,6 @@ const DownloadModal = ({
   theme 
 }) => {
   const [downloadStatus, setDownloadStatus] = useState('idle'); // idle, loading, success, error
-  const [selectedFormat, setSelectedFormat] = useState('png');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [terminalLines, setTerminalLines] = useState([]);
 
@@ -27,7 +25,6 @@ const DownloadModal = ({
   useEffect(() => {
     if (isOpen) {
       setDownloadStatus('idle');
-      setSelectedFormat('png');
       setLoadingProgress(0);
       setTerminalLines([]);
     }
@@ -40,7 +37,7 @@ const DownloadModal = ({
         { text: `$ cd ./widgets/42term`, delay: 300 },
         { text: `$ ls -la "${username}"`, delay: 800 },
         { text: `-rwxr-xr-x user staff 285 Mar 29 10:42 ${widgetType}.terminal`, delay: 1200 },
-        { text: `$ ./${widgetType}.terminal --user=${username} --theme=${theme} --format=${selectedFormat}`, delay: 1600 },
+        { text: `$ ./${widgetType}.terminal --user=${username} --theme=${theme} --format=svg`, delay: 1600 },
         { text: `generating...`, delay: 2000, special: true },
         { text: `optimizing...`, delay: 3000, special: true },
         { text: `preparing download...`, delay: 4000, special: true },
@@ -85,12 +82,12 @@ const DownloadModal = ({
         timeoutIds.forEach(id => clearTimeout(id));
       };
     }
-  }, [downloadStatus, username, widgetType, theme, selectedFormat]);
+  }, [downloadStatus, username, widgetType, theme]);
 
   // Generate download URL
-  const getDownloadUrl = (format) => {
+  const getDownloadUrl = () => {
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    return `${baseUrl}/api/download-widget/${widgetType}/${encodeURIComponent(username)}?theme=${theme}&format=${format}`;
+    return `${baseUrl}/api/download-widget/${widgetType}/${encodeURIComponent(username)}?theme=${theme}&format=svg`;
   };
 
   // Start download process
@@ -99,7 +96,7 @@ const DownloadModal = ({
     
     try {
       // Pre-fetch the resource to trigger generation
-      const response = await fetch(getDownloadUrl(selectedFormat));
+      const response = await fetch(getDownloadUrl());
       
       if (!response.ok) {
         throw new Error('Download generation failed');
@@ -115,8 +112,8 @@ const DownloadModal = ({
   // Trigger actual download after successful preparation
   const triggerDownload = () => {
     const link = document.createElement('a');
-    link.href = getDownloadUrl(selectedFormat);
-    link.download = `${username}-42-${widgetType}.${selectedFormat}`;
+    link.href = getDownloadUrl();
+    link.download = `${username}-42-${widgetType}.svg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -184,44 +181,13 @@ const DownloadModal = ({
           {downloadStatus === 'idle' && (
             <>
               <p className="text-gray-300 text-sm mb-4">
-                Select format to download the <span className={typeColors.accent}>{widgetType}</span> widget for <span className="text-white font-medium">{username}</span>
+                Download the <span className={typeColors.accent}>{widgetType}</span> widget for <span className="text-white font-medium">{username}</span> as an SVG file.
               </p>
               
               <div className="space-y-2 mb-6">
                 <label className="flex items-center p-3 border border-gray-800 rounded-lg cursor-pointer hover:bg-[#161B22] transition-colors">
-                  <input
-                    type="radio"
-                    name="format"
-                    value="png"
-                    checked={selectedFormat === 'png'}
-                    onChange={() => setSelectedFormat('png')}
-                    className="hidden"
-                  />
-                  <div className={`w-4 h-4 rounded-full border ${selectedFormat === 'png' ? 'border-0 p-0.5 ring-1 ring-offset-1 ring-offset-[#161B22] ring-white' : 'border-gray-600'} mr-3`}>
-                    {selectedFormat === 'png' && (
-                      <div className="w-full h-full rounded-full bg-white"></div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 flex-grow">
-                    <Image size={16} className="text-gray-400" />
-                    <span className="text-sm text-white">PNG Image</span>
-                  </div>
-                  <span className="text-xs text-gray-500">Best Quality</span>
-                </label>
-                
-                <label className="flex items-center p-3 border border-gray-800 rounded-lg cursor-pointer hover:bg-[#161B22] transition-colors">
-                  <input
-                    type="radio"
-                    name="format"
-                    value="svg"
-                    checked={selectedFormat === 'svg'}
-                    onChange={() => setSelectedFormat('svg')}
-                    className="hidden"
-                  />
-                  <div className={`w-4 h-4 rounded-full border ${selectedFormat === 'svg' ? 'border-0 p-0.5 ring-1 ring-offset-1 ring-offset-[#161B22] ring-white' : 'border-gray-600'} mr-3`}>
-                    {selectedFormat === 'svg' && (
-                      <div className="w-full h-full rounded-full bg-white"></div>
-                    )}
+                  <div className="w-4 h-4 rounded-full border border-0 p-0.5 ring-1 ring-offset-1 ring-offset-[#161B22] ring-white mr-3">
+                    <div className="w-full h-full rounded-full bg-white"></div>
                   </div>
                   <div className="flex items-center gap-2 flex-grow">
                     <FileCode2 size={16} className="text-gray-400" />
@@ -229,6 +195,12 @@ const DownloadModal = ({
                   </div>
                   <span className="text-xs text-gray-500">Scalable</span>
                 </label>
+                
+                <div className="bg-[#161B22] p-3 rounded-md mt-4">
+                  <p className="text-xs text-gray-400">
+                    SVG files are vector graphics that can be scaled to any size without losing quality. They can be used in design software like Illustrator or Figma, and are perfect for high-quality printing.
+                  </p>
+                </div>
               </div>
             </>
           )}
@@ -265,7 +237,7 @@ const DownloadModal = ({
                 />
               </div>
               <div className="mt-2 text-center text-xs text-gray-500">
-                Generating {selectedFormat.toUpperCase()} - {loadingProgress}%
+                Generating SVG - {loadingProgress}%
               </div>
             </div>
           )}
@@ -278,7 +250,7 @@ const DownloadModal = ({
                 </div>
               </div>
               <h4 className="text-white font-medium mb-1">Download Ready!</h4>
-              <p className="text-gray-400 text-sm mb-4">Your {selectedFormat.toUpperCase()} file has been successfully generated.</p>
+              <p className="text-gray-400 text-sm mb-4">Your SVG file has been successfully generated.</p>
             </div>
           )}
 
@@ -310,7 +282,7 @@ const DownloadModal = ({
                 className={`px-4 py-1.5 text-xs rounded-md text-white flex items-center gap-1.5 ${typeColors.button}`}
               >
                 <Download size={14} />
-                Download {selectedFormat.toUpperCase()}
+                Download SVG
               </button>
             </>
           )}

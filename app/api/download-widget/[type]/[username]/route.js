@@ -5,7 +5,7 @@ import { fetchStudentData } from '@/lib/api';
 import { generateTerminalSkills } from '@/lib/generators/terminalSkillsGenerator';
 import { generateTerminalProjects } from '@/lib/generators/terminalProjectsGenerator';
 import { generateTerminalStudent } from '@/lib/generators/terminalStudentGenerator';
-import { convertSvgToPng } from '@/lib/svgToPng';
+import { getUserLevel } from '@/lib/utils/levelFetcher';
 
 export async function GET(request, { params }) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request, { params }) {
     const { username, type } = params;
     const searchParams = request.nextUrl.searchParams;
     const theme = searchParams.get('theme') || 'dark';
-    const format = searchParams.get('format') || 'png'; // Default to PNG
+    const format = searchParams.get('format') || 'svg'; // Default to SVG
     
     // Get student data
     const decodedUsername = decodeURIComponent(username);
@@ -46,6 +46,43 @@ export async function GET(request, { params }) {
     } else if (type === 'student') {
       // Student profile has more fixed height
       height = 550;
+      
+      // IMPORTANT: If generating student widget, also fetch level explicitly
+      try {
+        console.log(`Explicitly fetching level for ${decodedUsername}`);
+        const userLevel = await getUserLevel(decodedUsername);
+        
+        // Inject the level into the studentData
+        if (userLevel > 0) {
+          console.log(`Setting explicit level: ${userLevel} for ${decodedUsername}`);
+          
+          // Make sure we have a cursus_users array
+          if (!studentData.cursus_users) {
+            studentData.cursus_users = [];
+          }
+          
+          // Find if we already have a 42cursus entry
+          const existingCursus = studentData.cursus_users.find(
+            c => c.cursus?.name === '42cursus' || c.cursus?.id === 21
+          );
+          
+          if (existingCursus) {
+            // Update the existing entry
+            existingCursus.level = userLevel;
+          } else {
+            // Add a new 42cursus entry
+            studentData.cursus_users.push({
+              cursus: { name: '42cursus', id: 21 },
+              level: userLevel
+            });
+          }
+          
+          // Also set directLevelValue for consistency
+          studentData.directLevelValue = userLevel;
+        }
+      } catch (levelError) {
+        console.error(`Error fetching level for ${decodedUsername}:`, levelError);
+      }
     }
     
     console.log(`Generating ${type} SVG with dimensions: ${width}x${height}`);
@@ -76,41 +113,21 @@ export async function GET(request, { params }) {
       svgContent = svgContent.substring(svgContent.indexOf('<svg'));
     }
     
-    // If SVG format is requested, return the SVG with appropriate headers
-    if (format === 'svg') {
-      console.log(`Returning SVG format for ${decodedUsername}`);
-      return new NextResponse(svgContent, {
-        headers: {
-          'Content-Type': 'image/svg+xml',
-          'Content-Disposition': `attachment; filename="${decodedUsername}-42-${type}.svg"`,
-          'Cache-Control': 'max-age=3600',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
-    }
-    
-    // For PNG format, convert SVG to PNG
-    console.log(`Converting SVG to PNG for ${decodedUsername}`);
-    const pngBuffer = await convertSvgToPng(svgContent, { 
-      width, 
-      height 
-    });
-    
-    console.log(`Successfully converted to PNG (${pngBuffer.length} bytes)`);
-    
-    // Return the PNG with download headers
-    return new NextResponse(pngBuffer, {
+    // Return the SVG with appropriate headers for download
+    console.log(`Returning SVG format for ${decodedUsername}`);
+    return new NextResponse(svgContent, {
       headers: {
-        'Content-Type': 'image/png',
-        'Content-Disposition': `attachment; filename="${decodedUsername}-42-${type}.png"`,
+        'Content-Type': 'image/svg+xml',
+        'Content-Disposition': `attachment; filename="${decodedUsername}-42-${type}.svg"`,
         'Cache-Control': 'max-age=3600',
         'Access-Control-Allow-Origin': '*'
       }
     });
-  } catch (error) {
-    console.error('Download conversion error:', error);
     
-    // Return a JSON error response instead of an error image
+  } catch (error) {
+    console.error('Download widget error:', error);
+    
+    // Return a JSON error response
     return NextResponse.json(
       { 
         error: 'Failed to generate downloadable image', 
