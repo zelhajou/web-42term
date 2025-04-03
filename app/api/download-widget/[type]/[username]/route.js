@@ -1,5 +1,4 @@
-// First, let's create an API endpoint to handle the download conversion (SVG to PNG)
-// Create a new file: app/api/download-widget/[type]/[username]/route.js
+// app/api/download-widget/[type]/[username]/route.js
 
 import { NextResponse } from 'next/server';
 import { fetchStudentData } from '@/lib/api';
@@ -10,6 +9,7 @@ import { convertSvgToPng } from '@/lib/svgToPng';
 
 export async function GET(request, { params }) {
   try {
+    console.log('Starting download widget request:', params);
     const { username, type } = params;
     const searchParams = request.nextUrl.searchParams;
     const theme = searchParams.get('theme') || 'dark';
@@ -17,7 +17,13 @@ export async function GET(request, { params }) {
     
     // Get student data
     const decodedUsername = decodeURIComponent(username);
+    console.log(`Fetching data for user: ${decodedUsername}`);
     const studentData = await fetchStudentData(decodedUsername);
+    
+    if (!studentData || !studentData.login) {
+      console.error(`No valid student data found for: ${decodedUsername}`);
+      throw new Error(`User '${decodedUsername}' not found or API error`);
+    }
     
     // Calculate appropriate dimensions
     let width = parseInt(searchParams.get('width'), 10) || 800;
@@ -41,6 +47,8 @@ export async function GET(request, { params }) {
       // Student profile has more fixed height
       height = 550;
     }
+    
+    console.log(`Generating ${type} SVG with dimensions: ${width}x${height}`);
     
     // Generate the SVG based on type
     let svgContent;
@@ -70,10 +78,11 @@ export async function GET(request, { params }) {
     
     // If SVG format is requested, return the SVG with appropriate headers
     if (format === 'svg') {
+      console.log(`Returning SVG format for ${decodedUsername}`);
       return new NextResponse(svgContent, {
         headers: {
           'Content-Type': 'image/svg+xml',
-          'Content-Disposition': `attachment; filename="${decodedUsername}-${type}.svg"`,
+          'Content-Disposition': `attachment; filename="${decodedUsername}-42-${type}.svg"`,
           'Cache-Control': 'max-age=3600',
           'Access-Control-Allow-Origin': '*'
         }
@@ -81,7 +90,13 @@ export async function GET(request, { params }) {
     }
     
     // For PNG format, convert SVG to PNG
-    const pngBuffer = await convertSvgToPng(svgContent, { width, height });
+    console.log(`Converting SVG to PNG for ${decodedUsername}`);
+    const pngBuffer = await convertSvgToPng(svgContent, { 
+      width, 
+      height 
+    });
+    
+    console.log(`Successfully converted to PNG (${pngBuffer.length} bytes)`);
     
     // Return the PNG with download headers
     return new NextResponse(pngBuffer, {
