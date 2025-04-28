@@ -1,6 +1,10 @@
 # 42term - Terminal-Style Widgets for 42 School Students
 
-<img width="1560" alt="Screen Shot 2025-04-28 at 11 45 20 AM" src="https://github.com/user-attachments/assets/0dd47cff-83a9-4519-b786-4f473c24d873" />
+<div align="center">
+
+![ScreenRecording2025-04-28at11 56 37AM-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/fe3609f6-3487-43ab-8ce6-154a33b8f5d0)
+
+</div>
 
 ## Overview
 
