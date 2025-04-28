@@ -76,11 +76,6 @@ const ErrorModal = ({ isOpen, onClose, errorMessage = '' }) => {
     }
   };
   
-  // For debugging - log the error message and determined type
-  console.log('Error message:', errorMessage);
-  const errorType = getErrorType(errorMessage);
-  console.log('Detected error type:', errorType);
-  
   const { title, message, icon, suggestion } = getErrorInfo(errorType, errorMessage);
   
   return (

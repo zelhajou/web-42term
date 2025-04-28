@@ -60,16 +60,7 @@ export async function GET(request, { params }) {
       throw new Error(`User '${decodedUsername}' not found or API error`);
     }
     
-    // Log user data to help debug
-    console.log(`Student data check for ${decodedUsername}:`, {
-      hasData: !!studentData,
-      login: studentData.login,
-      correctionPoints: studentData.correction_point || studentData.correctionPoints,
-      wallet: studentData.wallet,
-      hasProjectsUsers: Array.isArray(studentData.projects_users),
-      projectsCount: studentData.projects_users?.length || 0
-    });
-    
+
     // For any widget, fetch the level from studentData
     const level = studentData.directLevelValue || 
                   (studentData.cursus_users?.find(c => c.cursus?.name === '42cursus')?.level) || 

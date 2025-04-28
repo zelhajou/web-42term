@@ -11,13 +11,6 @@ export async function GET(request, { params }) {
     const resolvedParams = await Promise.resolve(params);
     const { username } = resolvedParams;
     
-    // Debug info - log environment variables availability
-    console.log('Environment check:', {
-      apiUrlExists: !!process.env.NEXT_PUBLIC_42_API_URL,
-      clientIdExists: !!process.env.FT_CLIENT_ID,
-      clientSecretExists: !!process.env.FT_CLIENT_SECRET
-    });
-    
     // Get student data from API
     const studentData = await fetchStudentData(username);
     
