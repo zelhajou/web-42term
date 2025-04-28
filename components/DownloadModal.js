@@ -198,7 +198,7 @@ const DownloadModal = ({
                 
                 <div className="bg-[#161B22] p-3 rounded-md mt-4">
                   <p className="text-xs text-gray-400">
-                    SVG files are vector graphics that can be scaled to any size without losing quality. They can be used in design software like Illustrator or Figma, and are perfect for high-quality printing.
+                    SVG files are vector graphics that can be scaled to any size without losing quality.
                   </p>
                 </div>
               </div>
