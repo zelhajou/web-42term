@@ -1,6 +1,6 @@
 # 42term - Terminal-Style Widgets for 42 School Students
 
-![42term Preview](https://i.imgur.com/example-image.jpg)
+<img width="1560" alt="Screen Shot 2025-04-28 at 11 45 20 AM" src="https://github.com/user-attachments/assets/0dd47cff-83a9-4519-b786-4f473c24d873" />
 
 ## Overview
 
@@ -54,6 +54,11 @@ Replace `username` with your 42 intra username, and choose the widget type:
 ```markdown
 ![zelhajou's 42 profile](https://42term.vercel.app/api/widget/student/zelhajou?theme=dark)
 ```
+<div align="center">
+  
+![zelhajou's 42 profile](https://42term.vercel.app/api/widget/student/zelhajou?theme=dark)
+
+</div>
 
 #### Projects Widget
 
@@ -61,11 +66,24 @@ Replace `username` with your 42 intra username, and choose the widget type:
 ![zelhajou's 42 projects](https://42term.vercel.app/api/widget/projects/zelhajou?theme=dark)
 ```
 
+<div align="center">
+  
+![zelhajou's 42 projects](https://42term.vercel.app/api/widget/projects/zelhajou?theme=dark)
+
+</div>
+
 #### Skills Widget
 
 ```markdown
 ![zelhajou's 42 skills](https://42term.vercel.app/api/widget/skills/zelhajou?theme=dark)
 ```
+
+<div align="center">
+  
+![zelhajou's 42 skills](https://42term.vercel.app/api/widget/skills/zelhajou?theme=dark)
+
+</div>
+
 
 ## API Endpoints
 
