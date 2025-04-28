@@ -1,36 +1,142 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 42term - Terminal-Style Widgets for 42 School Students
+
+![42term Preview](https://i.imgur.com/example-image.jpg)
+
+## Overview
+
+42term is a web application that generates beautiful terminal-style widgets to showcase 42 school students' profiles, projects, and skills. These widgets can be embedded in GitHub READMEs, personal websites, or anywhere that supports SVG images.
+
+## Features
+
+- **Multiple Widget Types**:
+  - **Profile Widget**: Display student information, level, and statistics
+  - **Projects Widget**: Showcase completed projects with marks
+  - **Skills Widget**: Visualize coding skills and proficiency levels
+
+- **Customization**:
+  - Dark and Light themes
+  - Adjustable width
+  - Downloadable SVG files
+
+- **Easy Integration**:
+  - Direct URL embedding
+  - Markdown for GitHub READMEs
+  - HTML for websites
 
 ## Getting Started
 
-First, run the development server:
+### Visit the Live App
 
+The easiest way to generate your widget is to visit [42term](https://42term.vercel.app) and follow these steps:
+
+1. Enter your 42 intra username
+2. Select the widget type (Profile, Projects, Skills)
+3. Choose your preferred theme
+4. Copy the generated markdown or HTML code
+
+### Embedding in GitHub README
+
+Add this to your GitHub README to display your widget:
+
+```markdown
+![username's 42 profile](https://42term.vercel.app/api/widget/student/username?theme=dark)
+```
+
+Replace `username` with your 42 intra username, and choose the widget type:
+- `student` for profile widget
+- `projects` for projects widget
+- `skills` for skills widget
+
+### Examples
+
+#### Profile Widget
+
+```markdown
+![zelhajou's 42 profile](https://42term.vercel.app/api/widget/student/zelhajou?theme=dark)
+```
+
+#### Projects Widget
+
+```markdown
+![zelhajou's 42 projects](https://42term.vercel.app/api/widget/projects/zelhajou?theme=dark)
+```
+
+#### Skills Widget
+
+```markdown
+![zelhajou's 42 skills](https://42term.vercel.app/api/widget/skills/zelhajou?theme=dark)
+```
+
+## API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/widget/:type/:username` | Generate SVG widget (type: student, projects, skills) |
+| `/api/student/:username` | Get raw student data |
+| `/api/github-badge/:username` | Simple GitHub-compatible level badge |
+| `/api/download-widget/:type/:username` | Downloadable SVG file |
+
+### Query Parameters
+
+- `theme`: `dark` or `light` (default: dark)
+- `width`: Width in pixels (default: 800)
+- `maxSkills`: Maximum skills to display for skills widget
+- `maxProjects`: Maximum projects to display for projects widget
+- `includePiscine`: Include Piscine projects (true/false)
+
+## Running Locally
+
+### Prerequisites
+
+- Node.js 18+
+- Yarn or npm
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/zelhajou/42term.git
+cd 42term
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn
+```
+
+3. Create a `.env` file with your 42 API credentials:
+```
+NEXT_PUBLIC_42_API_URL="https://api.intra.42.fr/v2"
+FT_CLIENT_SECRET="your-client-secret"
+FT_CLIENT_ID="your-client-id"
+```
+
+4. Run the development server:
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Technologies Used
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Next.js 15** - React framework
+- **TailwindCSS** - Styling
+- **42 API** - Data source
+- **SVG** - Widget rendering
 
-## Learn More
+## Contributing
 
-To learn more about Next.js, take a look at the following resources:
+Contributions are welcome! Feel free to submit issues or pull requests to help improve 42term.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This project is open source and available under the MIT License.
 
-## Deploy on Vercel
+## Acknowledgements
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Created with ❤️ by Zelhajou, a 1337 (42 Network) student. Not officially affiliated with 42 School.

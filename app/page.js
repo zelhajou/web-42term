@@ -298,7 +298,7 @@ const [errorMessage, setErrorMessage] = useState('');
             </span>
           </div>
           <a
-            href="https://github.com/zelhajou"
+            href="https://github.com/zelhajou/web-42term"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-400 hover:text-white transition-colors duration-200 flex items-center gap-2"
